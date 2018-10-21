@@ -412,10 +412,10 @@ if(true){
 	var gitalk = new Gitalk({
   	clientID: '7d112d9336ee67da5d6a',
   	clientSecret: 'ed454801c8d2bba6f7e3a5a12a79c99d44c342c6',
-  	repo: 'mygitalk',
+  	repo: 'secsir.github.io',
   	owner: 'secsir',
   	admin: ['secsir'],
-  	id: 'Tue Mar 21 2017 22:43:38 GMT+0800',
+  	id: md5(location.pathname),
   	distractionFreeMode: 'true'
 })
 gitalk.render('gitalk-container') 
