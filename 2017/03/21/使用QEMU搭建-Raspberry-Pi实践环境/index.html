@@ -8,18 +8,18 @@
   <link rel="dns-prefetch" href="http://yoursite.com">
   <title>使用QEMU搭建 Raspberry Pi实践环境 | Linux安全护卫</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="安装 Qemufor Ubuntu 16.04 amd64 :1sudo apt-get install qemu-system 下载raspbian系统和内核raspbian是官方的系统版本，下载地址：http://downloads.raspberrypi.org/raspbian/images/raspbian-2017-04-10/ (other versions might work,">
+  <meta name="description" content="概述本文意在说明在无ARM硬件条件下，通过QEMU来模拟运行raspbian系统，即可以使用此系统，也可以搞内核开发，具体用途，看每个人的意图而定！">
 <meta name="keywords" content="ARM,Raspberry Pi,Kernel">
 <meta property="og:type" content="article">
 <meta property="og:title" content="使用QEMU搭建 Raspberry Pi实践环境">
 <meta property="og:url" content="http://yoursite.com/2017/03/21/使用QEMU搭建-Raspberry-Pi实践环境/index.html">
 <meta property="og:site_name" content="Linux安全护卫">
-<meta property="og:description" content="安装 Qemufor Ubuntu 16.04 amd64 :1sudo apt-get install qemu-system 下载raspbian系统和内核raspbian是官方的系统版本，下载地址：http://downloads.raspberrypi.org/raspbian/images/raspbian-2017-04-10/ (other versions might work,">
+<meta property="og:description" content="概述本文意在说明在无ARM硬件条件下，通过QEMU来模拟运行raspbian系统，即可以使用此系统，也可以搞内核开发，具体用途，看每个人的意图而定！">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-10-21T14:45:17.596Z">
+<meta property="og:updated_time" content="2018-10-21T14:50:06.295Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用QEMU搭建 Raspberry Pi实践环境">
-<meta name="twitter:description" content="安装 Qemufor Ubuntu 16.04 amd64 :1sudo apt-get install qemu-system 下载raspbian系统和内核raspbian是官方的系统版本，下载地址：http://downloads.raspberrypi.org/raspbian/images/raspbian-2017-04-10/ (other versions might work,">
+<meta name="twitter:description" content="概述本文意在说明在无ARM硬件条件下，通过QEMU来模拟运行raspbian系统，即可以使用此系统，也可以搞内核开发，具体用途，看每个人的意图而定！">
   
     <link rel="alternative" href="/atom.xml" title="Linux安全护卫" type="application/atom+xml">
   
@@ -195,7 +195,9 @@
 	
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="安装-Qemu"><a href="#安装-Qemu" class="headerlink" title="安装 Qemu"></a>安装 Qemu</h1><p>for Ubuntu 16.04 amd64 :<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install qemu-system</span><br></pre></td></tr></table></figure></p>
+        <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>本文意在说明在无ARM硬件条件下，通过QEMU来模拟运行raspbian系统，即可以使用此系统，也可以搞内核开发，具体用途，看每个人的意图而定！</p>
+<a id="more"></a>
+<h1 id="安装-Qemu"><a href="#安装-Qemu" class="headerlink" title="安装 Qemu"></a>安装 Qemu</h1><p>for Ubuntu 16.04 amd64 :<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install qemu-system</span><br></pre></td></tr></table></figure></p>
 <h1 id="下载raspbian系统和内核"><a href="#下载raspbian系统和内核" class="headerlink" title="下载raspbian系统和内核"></a>下载raspbian系统和内核</h1><p>raspbian是官方的系统版本，下载地址：<a href="http://downloads.raspberrypi.org/raspbian/images/raspbian-2017-04-10/" target="_blank" rel="noopener">http://downloads.raspberrypi.org/raspbian/images/raspbian-2017-04-10/</a> (other versions might work, but Jessie is recommended)<br>注：我们这里下载的是2017-04-10-raspbian-jessie.zip<br>官方的内核并不能在Ｑｅｍｕ中运行，这里需要下载专门定制的内核：<br>Latest qemu kernel: <a href="https://github.com/dhruvvyas90/qemu-rpi-kernel" target="_blank" rel="noopener">https://github.com/dhruvvyas90/qemu-rpi-kernel</a><br>注：对应有多个raspbian版本，这里我们下载的是kernel-qemu-4.4.34-jessie</p>
 <h1 id="修改系统镜像文件"><a href="#修改系统镜像文件" class="headerlink" title="修改系统镜像文件"></a>修改系统镜像文件</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mkdir ~/qemu_vms/</span><br><span class="line">unzip 2017-04-10-raspbian-jessie.zip</span><br><span class="line">mv 2017-04-10-raspbian-jessie.img rpi.img</span><br></pre></td></tr></table></figure>
 <p>解压出2017-04-10-raspbian-jessie.img , 为我方便我们将它改名为rpi.img</p>
@@ -378,7 +380,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#安装-Qemu"><span class="toc-number">1.</span> <span class="toc-text">安装 Qemu</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#下载raspbian系统和内核"><span class="toc-number">2.</span> <span class="toc-text">下载raspbian系统和内核</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#修改系统镜像文件"><span class="toc-number">3.</span> <span class="toc-text">修改系统镜像文件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#挂载镜像rpi-img"><span class="toc-number">3.1.</span> <span class="toc-text">挂载镜像rpi.img</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#修改fstab"><span class="toc-number">3.2.</span> <span class="toc-text">修改fstab</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#修改-ld-so-preload"><span class="toc-number">3.3.</span> <span class="toc-text">修改　ld.so.preload</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#启动raspbian系统"><span class="toc-number">4.</span> <span class="toc-text">启动raspbian系统</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#网络访问"><span class="toc-number">5.</span> <span class="toc-text">网络访问</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#为镜像扩容"><span class="toc-number">6.</span> <span class="toc-text">为镜像扩容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#修改启动方式"><span class="toc-number">7.</span> <span class="toc-text">修改启动方式</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#概述"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#安装-Qemu"><span class="toc-number">2.</span> <span class="toc-text">安装 Qemu</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#下载raspbian系统和内核"><span class="toc-number">3.</span> <span class="toc-text">下载raspbian系统和内核</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#修改系统镜像文件"><span class="toc-number">4.</span> <span class="toc-text">修改系统镜像文件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#挂载镜像rpi-img"><span class="toc-number">4.1.</span> <span class="toc-text">挂载镜像rpi.img</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#修改fstab"><span class="toc-number">4.2.</span> <span class="toc-text">修改fstab</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#修改-ld-so-preload"><span class="toc-number">4.3.</span> <span class="toc-text">修改　ld.so.preload</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#启动raspbian系统"><span class="toc-number">5.</span> <span class="toc-text">启动raspbian系统</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#网络访问"><span class="toc-number">6.</span> <span class="toc-text">网络访问</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#为镜像扩容"><span class="toc-number">7.</span> <span class="toc-text">为镜像扩容</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#修改启动方式"><span class="toc-number">8.</span> <span class="toc-text">修改启动方式</span></a></li></ol>
                     </div>
                 </span>
             </div>
