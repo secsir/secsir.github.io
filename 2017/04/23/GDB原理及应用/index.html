@@ -8,18 +8,22 @@
   <link rel="dns-prefetch" href="https://laoma.tech">
   <title>GDB原理及应用 | 老马的安全屋</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="从源码到体系，安全无处不在！">
+  <meta name="description" content="一、概述  本文主要介绍大名鼎鼎的调试器GDB，当然，GDB是很专业很复杂的一个综合性工具，使用一本书来写也难以表达全面，这里，只是以Linux平台底层开发者的角度，首先从调试器基本理论入手，扒开GDB背后的层层包装，从底层入手，理解其实现过程，从更深层次的角度，多方位理解它，扩展它，以达到灵活运用它的目标。最后，并提到了它如何与其它软件结合使用，如虚拟机，甚至是其它调试器如IDA的综合运用，以便">
 <meta name="keywords" content="GDB,工具论">
 <meta property="og:type" content="article">
 <meta property="og:title" content="GDB原理及应用">
 <meta property="og:url" content="https://laoma.tech/2017/04/23/GDB原理及应用/index.html">
 <meta property="og:site_name" content="老马的安全屋">
-<meta property="og:description" content="从源码到体系，安全无处不在！">
+<meta property="og:description" content="一、概述  本文主要介绍大名鼎鼎的调试器GDB，当然，GDB是很专业很复杂的一个综合性工具，使用一本书来写也难以表达全面，这里，只是以Linux平台底层开发者的角度，首先从调试器基本理论入手，扒开GDB背后的层层包装，从底层入手，理解其实现过程，从更深层次的角度，多方位理解它，扩展它，以达到灵活运用它的目标。最后，并提到了它如何与其它软件结合使用，如虚拟机，甚至是其它调试器如IDA的综合运用，以便">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-10-24T14:28:03.669Z">
+<meta property="og:image" content="http://on44nkxjb.bkt.clouddn.com/18-10-25/23669800.jpg">
+<meta property="og:image" content="http://on44nkxjb.bkt.clouddn.com/18-10-26/79563217.jpg">
+<meta property="og:image" content="http://on44nkxjb.bkt.clouddn.com/18-10-25/50615474.jpg">
+<meta property="og:updated_time" content="2018-10-29T13:13:32.383Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="GDB原理及应用">
-<meta name="twitter:description" content="从源码到体系，安全无处不在！">
+<meta name="twitter:description" content="一、概述  本文主要介绍大名鼎鼎的调试器GDB，当然，GDB是很专业很复杂的一个综合性工具，使用一本书来写也难以表达全面，这里，只是以Linux平台底层开发者的角度，首先从调试器基本理论入手，扒开GDB背后的层层包装，从底层入手，理解其实现过程，从更深层次的角度，多方位理解它，扩展它，以达到灵活运用它的目标。最后，并提到了它如何与其它软件结合使用，如虚拟机，甚至是其它调试器如IDA的综合运用，以便">
+<meta name="twitter:image" content="http://on44nkxjb.bkt.clouddn.com/18-10-25/23669800.jpg">
   
     <link rel="alternative" href="/atom.xml" title="老马的安全屋" type="application/atom+xml">
   
@@ -66,9 +70,7 @@
 	        
 				<li><a href="/archives/index.html">归档</a></li>
 	        
-				<li><a href="/tags/随笔/">随笔</a></li>
-	        
-				<li><a href="/tags">标签</a></li>
+				<li><a href="/tags/">标签</a></li>
 	        
 			</ul>
 		</nav>
@@ -126,8 +128,6 @@
 			
 				
 			
-				
-			
 			
 			
 			<nav class="header-nav">
@@ -146,15 +146,13 @@
 				<ul style="width: 70%">
 				
 				
-					<li style="width: 20%"><a href="/">主页</a></li>
+					<li style="width: 25%"><a href="/">主页</a></li>
 		        
-					<li style="width: 20%"><a href="/categories">分类</a></li>
+					<li style="width: 25%"><a href="/categories">分类</a></li>
 		        
-					<li style="width: 20%"><a href="/archives/index.html">归档</a></li>
+					<li style="width: 25%"><a href="/archives/index.html">归档</a></li>
 		        
-					<li style="width: 20%"><a href="/tags/随笔/">随笔</a></li>
-		        
-					<li style="width: 20%"><a href="/tags">标签</a></li>
+					<li style="width: 25%"><a href="/tags/">标签</a></li>
 		        
 				</ul>
 			</nav>
@@ -191,7 +189,96 @@
 	
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <h1 id="一、概述"><a href="#一、概述" class="headerlink" title="一、概述"></a>一、概述</h1><p>  本文主要介绍大名鼎鼎的调试器GDB，当然，GDB是很专业很复杂的一个综合性工具，使用一本书来写也难以表达全面，这里，只是以Linux平台底层开发者的角度，首先从调试器基本理论入手，扒开GDB背后的层层包装，从底层入手，理解其实现过程，从更深层次的角度，多方位理解它，扩展它，以达到灵活运用它的目标。最后，并提到了它如何与其它软件结合使用，如虚拟机，甚至是其它调试器如IDA的综合运用，以便实现更复杂的调试任务。</p>
+<p>   本文属于大纲型的文章，其中部分内容分解为独立的博文，以便分类查看，以免堆在一起，显得杂乱无章了。</p>
+<a id="more"></a>
+<h1 id="二、GDB的原理"><a href="#二、GDB的原理" class="headerlink" title="二、GDB的原理"></a>二、GDB的原理</h1><h2 id="2-1-调试器基本原理"><a href="#2-1-调试器基本原理" class="headerlink" title="2.1 调试器基本原理"></a>2.1 调试器基本原理</h2><h3 id="调试器的目标是什么？"><a href="#调试器的目标是什么？" class="headerlink" title="调试器的目标是什么？"></a>调试器的目标是什么？</h3><p>调试器的用户一般是专业开发人员，因为程序正常执行是非常之快的，是为了让程序员更详细地了解目标程序的执行过程，就如同放慢镜头的效果，使程序员如同身处其中，了解每一个指令执行时，当时的每一个执行环境的细节信息，使开发人员更准确地理解执行过程，以便找到自己思路上与程序真实执行过程之间的差错。</p>
+<h3 id="调试器是如何工作的？"><a href="#调试器是如何工作的？" class="headerlink" title="调试器是如何工作的？"></a>调试器是如何工作的？</h3><p>调试器通过对目标进程执行过程的干预，让目标程序听从调试器的指挥（当然就是听从用户的指挥了），这其中常见的目的有以下几个：</p>
+<ul>
+<li>单步运行代码</li>
+<li>设置断点，然后可以运行程序</li>
+<li>查看运行环境信息（变量，堆栈）</li>
+<li>跟踪调用栈</li>
+</ul>
+<h2 id="2-2-GDB的基本原理"><a href="#2-2-GDB的基本原理" class="headerlink" title="2.2 GDB的基本原理"></a>2.2 GDB的基本原理</h2><p>调试器的这种调试关系在Linux平台上是通过ptrace接口，本质上是通过父子进程的关系</p>
+<h3 id="GDB担当什么角色"><a href="#GDB担当什么角色" class="headerlink" title="GDB担当什么角色"></a>GDB担当什么角色</h3><p>在整个调试过程中，GDB相对于用户的代言人，相对于被调试目标来说，GDB就是目标进程的指挥官，目标程序被监控之后，一切行动听指挥。</p>
+<h3 id="层次结构"><a href="#层次结构" class="headerlink" title="层次结构"></a>层次结构</h3><p><img src="http://on44nkxjb.bkt.clouddn.com/18-10-25/23669800.jpg" alt="结构图"><br>从上到下，从外到里，对GDB层层扒皮，可以划分为下面几个层次：</p>
+<ul>
+<li>应用接口层（GDB操作UI及CLI，MI接口等）</li>
+<li>符号处理层：在加载程序文件后，会读取其中的符号，变量、函数等信息，在GDB看到的运行信息都是此层完成的。在Linux平台上，这部分主要是依赖BFD库来完成的。</li>
+<li>目标系统控制实现层：包括执行控制，单点执行，堆栈分析等都由此部分完成，当然，在Linux平台上主要是通过系统调用ptrace来完成这些关键任务的。</li>
+</ul>
+<p><img src="http://on44nkxjb.bkt.clouddn.com/18-10-26/79563217.jpg" alt="结构图2"></p>
+<h3 id="三种调试方式"><a href="#三种调试方式" class="headerlink" title="三种调试方式"></a>三种调试方式</h3><h4 id="1-附加到正在运行的进程上进行调试"><a href="#1-附加到正在运行的进程上进行调试" class="headerlink" title="1. 附加到正在运行的进程上进行调试"></a>1. 附加到正在运行的进程上进行调试</h4><ul>
+<li><p>原理过程：<br>首先找到要调试的目标进程的PID（OS中PID为每个进程的唯一标识），此进程已经在运行，GDB以父进程的身份直接控制目标进程的运行过程，当然，这个操作是在权限允许的前提下才能实现。</p>
+</li>
+<li><p>操作示例：</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">./a.out &amp;</span><br><span class="line">$ ps -ef|grep a.out</span><br><span class="line">magc      3320  2791  0 20:58 pts/0    00:00:00 ./a.out</span><br><span class="line">magc      3323  2868  0 20:58 pts/1    00:00:00 grep a.out</span><br><span class="line"></span><br><span class="line">$ sudo gdb -p 3320</span><br><span class="line">[sudo] magc 的密码：</span><br><span class="line">GNU gdb (Debian 7.12-6+b2) 7.12.0.20161007-git</span><br><span class="line">Copyright (C) 2016 Free Software Foundation, Inc.</span><br><span class="line">License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;</span><br><span class="line">This is free software: you are free to change and redistribute it.</span><br><span class="line">There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;</span><br><span class="line">and &quot;show warranty&quot; for details.</span><br><span class="line">This GDB was configured as &quot;x86_64-linux-gnu&quot;.</span><br><span class="line">Type &quot;show configuration&quot; for configuration details.</span><br><span class="line">For bug reporting instructions, please see:</span><br><span class="line">&lt;http://www.gnu.org/software/gdb/bugs/&gt;.</span><br><span class="line">Find the GDB manual and other documentation resources online at:</span><br><span class="line">&lt;http://www.gnu.org/software/gdb/documentation/&gt;.</span><br><span class="line">For help, type &quot;help&quot;.</span><br><span class="line">Type &quot;apropos word&quot; to search for commands related to &quot;word&quot;.</span><br><span class="line">Attaching to process 3320</span><br><span class="line">Reading symbols from /home/magc/workspace/a.out...done.</span><br><span class="line">Reading symbols from /lib/x86_64-linux-gnu/libc.so.6...Reading symbols from /usr/lib/debug/.build-id/8f/d0a29758bf6615673836bb20ffdf11dcb531e6.debug...done.</span><br><span class="line">done.</span><br><span class="line">Reading symbols from /lib64/ld-linux-x86-64.so.2...Reading symbols from /usr/lib/debug/.build-id/90/56864907e4d74f113132f5a85b5952bc152de1.debug...done.</span><br><span class="line">done.</span><br><span class="line">0x00007f6e2d467404 in __GI___nanosleep (requested_time=requested_time@entry=0x7ffc140ef990, remaining=remaining@entry=0x7ffc140ef990)</span><br><span class="line">    at ../sysdeps/unix/sysv/linux/nanosleep.c:28</span><br><span class="line">28	../sysdeps/unix/sysv/linux/nanosleep.c: 没有那个文件或目录.</span><br><span class="line">(gdb) l</span><br><span class="line">23	in ../sysdeps/unix/sysv/linux/nanosleep.c</span><br><span class="line">(gdb) l</span><br><span class="line">23	in ../sysdeps/unix/sysv/linux/nanosleep.c</span><br><span class="line">(gdb) stop</span><br><span class="line">(gdb) print a</span><br><span class="line">No symbol &quot;a&quot; in current context.</span><br><span class="line">(gdb) b main</span><br><span class="line">Breakpoint 1 at 0x561da1256692: file test.c, line 24.</span><br><span class="line">(gdb) r</span><br><span class="line">The program being debugged has been started already.</span><br><span class="line">Start it from the beginning? (y or n) y</span><br><span class="line">Starting program: /home/magc/workspace/a.out </span><br><span class="line"></span><br><span class="line">Breakpoint 1, main () at test.c:24</span><br><span class="line">24	    int a = 0;</span><br><span class="line">(gdb) print a</span><br><span class="line">$1 = 0</span><br></pre></td></tr></table></figure>
+<h4 id="2-运行并调试一个新进程"><a href="#2-运行并调试一个新进程" class="headerlink" title="2.运行并调试一个新进程"></a>2.运行并调试一个新进程</h4><ul>
+<li>原理过程：<br>在GDB中执行run命令，先用fork()创建一个新进程，此进程通过调用 ptrace(PTRACE_TRACEME,0,0,0)与父进程建立调用关系，然后再通过execv()来加载指定的用户程序，后面就真正开始调试过程了。</li>
+<li>操作示例：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 启动GDB调试，打开GDB调试界面</span><br><span class="line">gdb -q a.out</span><br><span class="line"></span><br><span class="line"># 查看进程的父子关系</span><br><span class="line">$ ps -ef|grep a.out </span><br><span class="line">magc      2854  2791  0 20:45 pts/0    00:00:00 gdb -q a.out</span><br><span class="line">magc      2858  2854  0 20:46 pts/0    00:00:00 /home/magc/workspace/a.out</span><br><span class="line">magc      2881  2868  0 20:47 pts/1    00:00:00 grep a.out</span><br></pre></td></tr></table></figure>
+<p>可以看到a.out(PID:2858)作为子进程，gdb(PID:2854)作为父进程<br>注：具体操作可以参考另一篇博文《GDB基本功》</p>
+<h4 id="3-远程调试"><a href="#3-远程调试" class="headerlink" title="3.远程调试"></a>3.远程调试</h4><ul>
+<li>原理过程：<br>远程调试，顾名思义，与上面两种方式不同的是，GDB和目标程序并没有在同一台机器上，这时就需要gdb-server来帮忙了，示例图可参考上面图所示，用户操作的GDB作为客户端，在远程目标主机上运行着目标程序和GDB Server程序，进而实现远程调试过程。除了这个架构区别之外，其它操作都是相同的。</li>
+<li>操作示例：</li>
+</ul>
+<p>详见另一篇博文《GDB远程调试》</p>
+<h3 id="GDB的底层支撑－－ptrace系统调用"><a href="#GDB的底层支撑－－ptrace系统调用" class="headerlink" title="GDB的底层支撑－－ptrace系统调用"></a>GDB的底层支撑－－ptrace系统调用</h3><h4 id="ptrace设计目标"><a href="#ptrace设计目标" class="headerlink" title="ptrace设计目标"></a>ptrace设计目标</h4><p>提供一种可以控制另一个进程执行过程的能力接口，监控其内存及运行环境（寄存器等），深入到其进程内部。因为这些信息都是内核态的，所以就以系统调用的形式实现，提供给用户态调试器GDB使用。</p>
+<h4 id="函数原型"><a href="#函数原型" class="headerlink" title="函数原型"></a>函数原型</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">long ptrace(enum __ptrace_request request, pid_t pid,void *addr,void *data);</span><br></pre></td></tr></table></figure>
+<p>第一个参数常见可选项：</p>
+<ul>
+<li>PTRACE_TRACEME: 由这个枚举名就可以看出，是由被调试的目标程序发出请求，此程序作为子进程，而请求对象是作为父进程，通过此系统调用，将两者建立起调试关系，父进程可以检查和修改子进程的内存映象及寄存器（运行环境），由此，实现调试的目的</li>
+<li>PTRACE_ATTACH：此种方式是由调试器发起的，通过第二个参数来指定要调试的目标进程PID，这样，调试器将作为被调试目标的父进程来控制目标进程的运行。</li>
+<li>PTRACE_CONT：让因调试停止下来的目标进程继续执行</li>
+<li>其它</li>
+</ul>
+<p>第二个参数：代表了被调试的目标程序PID<br>第三个参数：代表了被监控的内存地址<br>第四个参数：存放要读取或写入的数据</p>
+<p>详见另一篇博文《ptrace原理及应用》</p>
+<h3 id="GDB的控制基础—信号"><a href="#GDB的控制基础—信号" class="headerlink" title="GDB的控制基础—信号"></a>GDB的控制基础—信号</h3><p>GDB实现对被调试目标进程的控制（本质是进程之间的通信），是建立在信号机制基础上的，通过ptrace建立了调试关系之后，GDB就会接管被调试目标进程的所有信号，根据用户操作需要，GDB来适时地将某些信号发给目标进程，目标进程就是根据这些信号来听从指挥的。</p>
+<ul>
+<li>设置断点过程中的信号：<br>信号是实现断点的基础，当用breakpoint 设置一个断点后，gdb会找到该位置对应的具体指令地址，然后向该地址写入断点指令INT3，即0xCC。目标程序运行到这条指令时，就会触发SIGTRAP信号，gdb会首先捕获到这个信号。然后根据目标程序当前停止的位置在gdb维护的断点链表中查询，若存在，则可判定为命中断点。 gdb暂停目标程序运行的方法是想起发送SIGSTOP信号。 </li>
+</ul>
+<ul>
+<li>单步执行中的信号</li>
+</ul>
+<p>next指令可以实现单步调试，即每次只执行一行语句。这里一行语句是指高级语言中的一行，一行高级语言的语句可能对应多条及其指令，当执行next指令时，gdb会计算下一条语句对应的第一条指令的地址，然后控制目标程序走到该位置停止。 </p>
+<h2 id="2-3-GDB的核心功能"><a href="#2-3-GDB的核心功能" class="headerlink" title="2.3 GDB的核心功能"></a>2.3 GDB的核心功能</h2><h3 id="设置断点"><a href="#设置断点" class="headerlink" title="设置断点"></a>设置断点</h3><ul>
+<li>断点实现种类：</li>
+</ul>
+<p>断点其实分软件实现和硬件实现两种，</p>
+<ul>
+<li>软件实现原理：</li>
+</ul>
+<p>如上面所说，GDB的断点基础是信号，在GDB中设置断点时，其实是GDB将断点处的指令修改成int 3指令（可以触发SIGTRIP信号），然后将替换掉的指令保存起来。在被调试的目标进程运行到此处int 3指令时，触发SIGTRIP信号，由于此进程与其父进程有调试关系，所有信号都会先交给GDB处理，GDB收到此信号后，会比对断点的信号（GDB在一个链表结构中保存了所有的断点信息），判断是否为命中断点，如果是，就等待用户的操作指令，若是用户给出继续命令(continue)，GDB则会恢复断点处的原始指令（从备份中拿回原指令），继续执行。</p>
+<ul>
+<li>硬件实现原理：</li>
+</ul>
+<p>不同硬件平台提供了不同的断点指令。</p>
+<ul>
+<li>断点对性能的影响：</li>
+</ul>
+<p>目标程序在执行到断点之前，其运行过程与无调试情况下是一致的，因此对性能不会有什么影响，而在遇到断点之后，不论是否停顿，都会对性能有所影响，</p>
+<h3 id="单步执行"><a href="#单步执行" class="headerlink" title="单步执行"></a>单步执行</h3><p>实现原理：在GDB中单步跟踪对应有多种命令，如next,step , nexti,stepi等，在Linux平台上此过程是基于ptrace(PTRACE_SINGLESTEP,pid,…)系统调用来实现的，再深入到ptrace的实现层，其实这也分硬件实现和软件实现两种方式的。例如X86处理器支持单步模式（EFLAGS中的TF标识),每执行一条指令，便产生一次异常，软件实现方式和上面中断实现是一样的，只是这里会在每一条指令后都加入INT 3 指令。<br>在按源码行单步时，是GDB里实现一行源码对应哪几条指令的，<br><img src="http://on44nkxjb.bkt.clouddn.com/18-10-25/50615474.jpg" alt="next"></p>
+<h3 id="查看运行环境数据"><a href="#查看运行环境数据" class="headerlink" title="查看运行环境数据"></a>查看运行环境数据</h3><p>实现原理：同样是基于ptrace()系统调用实现，使用的参数是PTRACE_PEEKTEXT, PTRACE_PEEKDATA, PTRACE_PEEKUSR等。</p>
+<h3 id="修改运行数据"><a href="#修改运行数据" class="headerlink" title="修改运行数据"></a>修改运行数据</h3><p>实现原理：通过pstrace系统调用来实现对内存和寄存器修改的，使用的参数是PTRACE_POKETEXT, PTRACE_POKEDATA, PTRACE_POKEUSR</p>
+<p>具体示例可参考另一篇博文《ptrace原理及应用》</p>
+<h2 id="2-4-基本操作"><a href="#2-4-基本操作" class="headerlink" title="2.4 基本操作"></a>2.4 基本操作</h2><p>详见另一个文章《GDB的基本功》</p>
+<h1 id="三、相关脚本插件"><a href="#三、相关脚本插件" class="headerlink" title="三、相关脚本插件"></a>三、相关脚本插件</h1><h2 id="3-1-gef"><a href="#3-1-gef" class="headerlink" title="3.1 gef"></a>3.1 gef</h2><p>参考另一篇博文《GDB高级插件-GEF》</p>
+<h1 id="四、GDB应用场景"><a href="#四、GDB应用场景" class="headerlink" title="四、GDB应用场景"></a>四、GDB应用场景</h1><h2 id="4-1-GDB常见应用姿势"><a href="#4-1-GDB常见应用姿势" class="headerlink" title="4.1 GDB常见应用姿势"></a>4.1 GDB常见应用姿势</h2><h3 id="1-调试一个新程序"><a href="#1-调试一个新程序" class="headerlink" title="1.调试一个新程序"></a>1.调试一个新程序</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="2-Attach到目标程序进行调试"><a href="#2-Attach到目标程序进行调试" class="headerlink" title="2.Attach到目标程序进行调试"></a>2.Attach到目标程序进行调试</h3><h3 id="3-分析Core文件"><a href="#3-分析Core文件" class="headerlink" title="3.分析Core文件"></a>3.分析Core文件</h3><p>详见另一篇博文《使用GDB分析Core文件》</p>
+<h2 id="4-2-GDB高级应用姿势"><a href="#4-2-GDB高级应用姿势" class="headerlink" title="4.2 GDB高级应用姿势"></a>4.2 GDB高级应用姿势</h2><h3 id="1-在GDB中使用外部命令"><a href="#1-在GDB中使用外部命令" class="headerlink" title="1.在GDB中使用外部命令"></a>1.在GDB中使用外部命令</h3><p>详情请见另一篇博文《在GDB中使用外部命令》</p>
+<h3 id="2-GDB-Qemu调试内核"><a href="#2-GDB-Qemu调试内核" class="headerlink" title="2.GDB+Qemu调试内核"></a>2.GDB+Qemu调试内核</h3><p>详情请见另一篇博文内容《GDB+Qemu调试内核》</p>
+<h3 id="3-GDB-IDA调试内核"><a href="#3-GDB-IDA调试内核" class="headerlink" title="3.GDB+IDA调试内核"></a>3.GDB+IDA调试内核</h3><p>详情请见另一篇博文内容《GDB+IDA调试内核》</p>
+<h3 id="4-二进制分析"><a href="#4-二进制分析" class="headerlink" title="4.二进制分析"></a>4.二进制分析</h3><p>详情请见另一篇博文内容《二进制分析》</p>
+<h1 id="四、GDB的扩展"><a href="#四、GDB的扩展" class="headerlink" title="四、GDB的扩展"></a>四、GDB的扩展</h1><p>参考：<a href="https://www.ibm.com/developerworks/cn/linux/l-cn-gdb/" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/linux/l-cn-gdb/</a></p>
+<p>## </p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>-<a href="https://blog.csdn.net/edonlii/article/details/8717029" target="_blank" rel="noopener">https://blog.csdn.net/edonlii/article/details/8717029</a></p>
+<p><a href="http://blog.jobbole.com/23463/" target="_blank" rel="noopener">http://blog.jobbole.com/23463/</a><br><a href="https://blog.csdn.net/u012658346/article/details/51159971" target="_blank" rel="noopener">https://blog.csdn.net/u012658346/article/details/51159971</a><br><a href="http://javadino.blog.sohu.com/101228793.html" target="_blank" rel="noopener">http://javadino.blog.sohu.com/101228793.html</a></p>
+
       
 
       
@@ -344,7 +431,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    目录，不存在的…
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#一、概述"><span class="toc-number">1.</span> <span class="toc-text">一、概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#二、GDB的原理"><span class="toc-number">2.</span> <span class="toc-text">二、GDB的原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-调试器基本原理"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 调试器基本原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#调试器的目标是什么？"><span class="toc-number">2.1.1.</span> <span class="toc-text">调试器的目标是什么？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#调试器是如何工作的？"><span class="toc-number">2.1.2.</span> <span class="toc-text">调试器是如何工作的？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-GDB的基本原理"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 GDB的基本原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#GDB担当什么角色"><span class="toc-number">2.2.1.</span> <span class="toc-text">GDB担当什么角色</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#层次结构"><span class="toc-number">2.2.2.</span> <span class="toc-text">层次结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#三种调试方式"><span class="toc-number">2.2.3.</span> <span class="toc-text">三种调试方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-附加到正在运行的进程上进行调试"><span class="toc-number">2.2.3.1.</span> <span class="toc-text">1. 附加到正在运行的进程上进行调试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-运行并调试一个新进程"><span class="toc-number">2.2.3.2.</span> <span class="toc-text">2.运行并调试一个新进程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-远程调试"><span class="toc-number">2.2.3.3.</span> <span class="toc-text">3.远程调试</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GDB的底层支撑－－ptrace系统调用"><span class="toc-number">2.2.4.</span> <span class="toc-text">GDB的底层支撑－－ptrace系统调用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#ptrace设计目标"><span class="toc-number">2.2.4.1.</span> <span class="toc-text">ptrace设计目标</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#函数原型"><span class="toc-number">2.2.4.2.</span> <span class="toc-text">函数原型</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GDB的控制基础—信号"><span class="toc-number">2.2.5.</span> <span class="toc-text">GDB的控制基础—信号</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-GDB的核心功能"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 GDB的核心功能</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#设置断点"><span class="toc-number">2.3.1.</span> <span class="toc-text">设置断点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#单步执行"><span class="toc-number">2.3.2.</span> <span class="toc-text">单步执行</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#查看运行环境数据"><span class="toc-number">2.3.3.</span> <span class="toc-text">查看运行环境数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#修改运行数据"><span class="toc-number">2.3.4.</span> <span class="toc-text">修改运行数据</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-基本操作"><span class="toc-number">2.4.</span> <span class="toc-text">2.4 基本操作</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#三、相关脚本插件"><span class="toc-number">3.</span> <span class="toc-text">三、相关脚本插件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-gef"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 gef</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、GDB应用场景"><span class="toc-number">4.</span> <span class="toc-text">四、GDB应用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#4-1-GDB常见应用姿势"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 GDB常见应用姿势</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-调试一个新程序"><span class="toc-number">4.1.1.</span> <span class="toc-text">1.调试一个新程序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Attach到目标程序进行调试"><span class="toc-number">4.1.2.</span> <span class="toc-text">2.Attach到目标程序进行调试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-分析Core文件"><span class="toc-number">4.1.3.</span> <span class="toc-text">3.分析Core文件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-2-GDB高级应用姿势"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 GDB高级应用姿势</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-在GDB中使用外部命令"><span class="toc-number">4.2.1.</span> <span class="toc-text">1.在GDB中使用外部命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-GDB-Qemu调试内核"><span class="toc-number">4.2.2.</span> <span class="toc-text">2.GDB+Qemu调试内核</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-GDB-IDA调试内核"><span class="toc-number">4.2.3.</span> <span class="toc-text">3.GDB+IDA调试内核</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-二进制分析"><span class="toc-number">4.2.4.</span> <span class="toc-text">4.二进制分析</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#四、GDB的扩展"><span class="toc-number">5.</span> <span class="toc-text">四、GDB的扩展</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol>
                     </div>
                 </span>
             </div>
@@ -452,18 +539,6 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">ARM</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">Raspberry Pi</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">Kernel</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">hexo</a>
               </li>
              
@@ -473,6 +548,18 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">kernel</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">ARM</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">Raspberry Pi</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Kernel</a>
               </li>
             
             <div class="clearfix"></div>
